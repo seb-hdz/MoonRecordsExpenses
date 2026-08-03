@@ -12,7 +12,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { useIsStandalone } from "@/lib/use-standalone";
-import { useApplePlatformKind } from "@/lib/use-apple-platform";
+// import { useApplePlatformKind } from "@/lib/use-apple-platform";
 import { ContextHint } from "@/components/ui/context-hint";
 import {
   APP_STANDALONE_INFO_DISMISSED_EVENT,
@@ -37,31 +37,31 @@ function getPersistedDismissed(): boolean {
 
 export function StandaloneInfoModal() {
   const isStandalone = useIsStandalone();
-  const { ready: appleReady, kind: appleKind } = useApplePlatformKind();
+  // const { ready: appleReady, kind: appleKind } = useApplePlatformKind();
   const [justDismissed, setJustDismissed] = useState(false);
   const dismissButtonRef = useRef<HTMLButtonElement>(null);
 
   const renderDescription = () => {
-    if (!appleReady || !appleKind) {
-      return (
-        <>
-          La app instalada puede funcionar{" "}
-          <strong className="text-foreground">separada</strong> del navegador.
-        </>
-      );
-    }
-
-    const applePlatform = appleKind === "ios" ? "iOS" : "Safari";
-
+    // if (!appleReady || !appleKind) {
     return (
-      <p className="">
-        En <strong className="text-foreground">{applePlatform}</strong>, el uso
-        de URLs para sincronizar cuentas compartidas{" "}
-        <strong className="text-foreground">funciona distinto</strong> que en el
-        navegador.
-      </p>
+      <>
+        La app instalada funciona{" "}
+        <strong className="text-foreground">separada</strong> del navegador.
+      </>
     );
   };
+
+  // const applePlatform = appleKind === "ios" ? "iOS" : "Safari";
+
+  // return (
+  //   <p className="">
+  //     En <strong className="text-foreground">{applePlatform}</strong>, el uso
+  //     de URLs para sincronizar cuentas compartidas{" "}
+  //     <strong className="text-foreground">funciona distinto</strong> que en el
+  //     navegador.
+  //   </p>
+  // );
+  // };
 
   const persistedDismissed = useSyncExternalStore(
     subscribe,
