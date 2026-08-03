@@ -58,6 +58,18 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         purpose: "any",
       },
+      {
+        src: `${prefix}/icons/icon-192-maskable.png`,
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: `${prefix}/icons/icon-512-maskable.png`,
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
     ],
     shortcuts: [
       {

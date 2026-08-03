@@ -56,19 +56,27 @@ export const metadata: Metadata = {
     description: defaultSiteDescription,
   },
   icons: {
-    icon: `${appBasePath}/favicon.ico`,
-    apple: [
+    icon: [
       {
-        url: `${appBasePath}/icons/icon-192.png`,
-        sizes: "192x192",
-        type: "image/png",
+        url: `${appBasePath}/favicon.ico`,
+        sizes: "48x48",
+        type: "image/x-icon",
       },
       {
-        url: `${appBasePath}/icons/icon-512.png`,
-        sizes: "512x512",
+        url: `${appBasePath}/favicon.svg`,
+        type: "image/svg+xml",
+      },
+      {
+        url: `${appBasePath}/favicon-96x96.png`,
+        sizes: "96x96",
         type: "image/png",
       },
     ],
+    apple: {
+      url: `${appBasePath}/apple-touch-icon.png`,
+      sizes: "180x180",
+      type: "image/png",
+    },
   },
   appleWebApp: {
     capable: true,

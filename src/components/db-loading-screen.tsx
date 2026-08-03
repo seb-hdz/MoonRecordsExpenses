@@ -147,10 +147,10 @@ export function DbLoadingScreen({ showPhrases = true }: DbLoadingScreenProps) {
           <Image
             src={logoMark}
             alt=""
-            width={96}
-            height={96}
+            width={256}
+            height={256}
             priority
-            className="size-24 object-contain drop-shadow-sm"
+            className="size-[12.5rem] object-contain drop-shadow-sm"
           />
         </div>
 
