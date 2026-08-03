@@ -8,21 +8,21 @@ import {
   useState,
   type TransitionEvent,
 } from "react";
-import logoMark from "@/assets/logo.svg";
+import logoMark from "@/assets/Logo.png";
 import { DriftingMeshBackground } from "@/components/decorative/drifting-mesh-background";
 import { cn } from "@/lib/utils";
 
 const LOADING_PHRASES = [
   "Configurando tu base de datos",
   "Cargando la interfaz de registro de gastos",
-  "Sincronizando categorías y etiquetas",
+  // "Sincronizando categorías y etiquetas",
   "Puliendo los gráficos de reportes",
-  "Despertando al cerdito contable",
+  // "Despertando al cerdito contable",
   "Comprobando que los números cuadren",
   "Abriendo el cajón de los recibos",
-  "Enseñandole a Finanzzz dónde van los datos",
-  "Recordando cuánto gastaste en café",
-  "Alineando estrellas del presupuesto",
+  // "Enseñandole a Moon Records Expenses dónde van los datos",
+  "Recordando cuánto gastaste en esos discos",
+  // "Alineando estrellas del presupuesto",
 ] as const;
 
 function randomPhraseIndex(exclude: number): number {

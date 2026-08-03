@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito_Sans, Geist_Mono } from "next/font/google";
+import { APP_SHORT_NAME } from "@/lib/app-brand";
 import { appBasePath } from "@/lib/app-base-path";
 import { iosPortraitStartupImages } from "@/lib/ios-splash-portrait";
 import {
@@ -67,22 +68,12 @@ export const metadata: Metadata = {
         sizes: "512x512",
         type: "image/png",
       },
-      {
-        url: `${appBasePath}/icons/icon-192.svg`,
-        sizes: "192x192",
-        type: "image/svg+xml",
-      },
-      {
-        url: `${appBasePath}/icons/icon-512.svg`,
-        sizes: "512x512",
-        type: "image/svg+xml",
-      },
     ],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Finanzzz",
+    title: APP_SHORT_NAME,
     startupImage: iosPortraitStartupImages(appBasePath),
   },
   /**
@@ -96,7 +87,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#0F180F",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

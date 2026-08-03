@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
+import { APP_DISPLAY_NAME, APP_SHORT_NAME } from "@/lib/app-brand";
 import { appBasePath } from "@/lib/app-base-path";
 import { HOME_QUICK_ACTION_PATHS } from "@/lib/home-quick-action-paths";
 
 export const dynamic = "force-static";
 
 /**
- * Orden: PNG por acceso → icono general de la app → SVG (p. ej. Android/WebAPK).
+ * Orden: PNG del atajo → fallback al icono general de la app.
  */
 const SHORTCUT_ICONS = (name: string) => {
   const prefix = appBasePath;
@@ -20,11 +21,6 @@ const SHORTCUT_ICONS = (name: string) => {
       sizes: "192x192",
       type: "image/png",
     },
-    {
-      src: `${prefix}/icons/shortcut-${name}.svg`,
-      sizes: "192x192",
-      type: "image/svg+xml",
-    },
   ];
 };
 
@@ -32,8 +28,8 @@ export default function manifest(): MetadataRoute.Manifest {
   const prefix = appBasePath;
 
   return {
-    name: "Finanzzz",
-    short_name: "Finanzzz",
+    name: APP_DISPLAY_NAME,
+    short_name: APP_SHORT_NAME,
     description: "Control de gastos personales",
     start_url: `${prefix}/`,
     scope: `${prefix}/`,
@@ -46,8 +42,8 @@ export default function manifest(): MetadataRoute.Manifest {
       client_mode: ["navigate-existing", "auto"],
     },
     display: "standalone",
-    background_color: "#0a0a0a",
-    theme_color: "#0a0a0a",
+    background_color: "#0F180F",
+    theme_color: "#0F180F",
     orientation: "portrait-primary",
     icons: [
       {
@@ -62,18 +58,6 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         purpose: "any",
       },
-      {
-        src: `${prefix}/icons/icon-192.svg`,
-        sizes: "192x192",
-        type: "image/svg+xml",
-        purpose: "any",
-      },
-      {
-        src: `${prefix}/icons/icon-512.svg`,
-        sizes: "512x512",
-        type: "image/svg+xml",
-        purpose: "any",
-      },
     ],
     shortcuts: [
       {
@@ -81,13 +65,6 @@ export default function manifest(): MetadataRoute.Manifest {
         description: "Registra un nuevo gasto",
         url: `${prefix}${HOME_QUICK_ACTION_PATHS.new_expense}`,
         icons: SHORTCUT_ICONS("expense"),
-      },
-      {
-        name: "Sincronizar cuenta compartida",
-        short_name: "Sincronizar",
-        description: "Sincroniza una cuenta compartida",
-        url: `${prefix}${HOME_QUICK_ACTION_PATHS.sync_shared}`,
-        icons: SHORTCUT_ICONS("sync"),
       },
       {
         name: "Generar reporte",

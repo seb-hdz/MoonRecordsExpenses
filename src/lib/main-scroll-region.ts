@@ -72,7 +72,7 @@ export function scrollMainRegionToElementId(
   scrollMainRegionElementToViewportTop(element, options);
 }
 
-/** Matches `/settings` with optional leading base path (e.g. `/finanzzz/settings`). */
+/** Matches `/settings` with optional leading base path (e.g. `/MoonRecordsExpenses/settings`). */
 export function isSettingsPathname(pathname: string): boolean {
   return /\/settings$/.test(pathname.replace(/\/$/, ""));
 }

@@ -14,9 +14,14 @@ import {
 import { useIsStandalone } from "@/lib/use-standalone";
 import { useApplePlatformKind } from "@/lib/use-apple-platform";
 import { ContextHint } from "@/components/ui/context-hint";
+import {
+  APP_STANDALONE_INFO_DISMISSED_EVENT,
+  APP_STANDALONE_INFO_DISMISSED_KEY,
+} from "@/lib/app-brand";
 
-export const STANDALONE_INFO_DISMISSED_KEY =
-  "finanzzz:standalone-info-dismissed";
+export const STANDALONE_INFO_DISMISSED_KEY = APP_STANDALONE_INFO_DISMISSED_KEY;
+export const STANDALONE_INFO_DISMISSED_EVENT =
+  APP_STANDALONE_INFO_DISMISSED_EVENT;
 
 function subscribe() {
   return () => {};
@@ -72,7 +77,7 @@ export function StandaloneInfoModal() {
     try {
       localStorage.setItem(STANDALONE_INFO_DISMISSED_KEY, "1");
     } catch {}
-    window.dispatchEvent(new Event("finanzzz:standalone-info-dismissed"));
+    window.dispatchEvent(new Event(STANDALONE_INFO_DISMISSED_EVENT));
   }
 
   if (!isStandalone) return null;

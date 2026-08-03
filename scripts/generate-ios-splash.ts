@@ -23,7 +23,12 @@ import {
 
 const INKSCAPE = "/Applications/Inkscape.app/Contents/MacOS/inkscape";
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const ICON_SVG = join(REPO_ROOT, "public", "icons", "finanzzz-only.svg");
+const ICON_MARK = join(
+  REPO_ROOT,
+  "public",
+  "icons",
+  "moon-records-only.png"
+);
 const OUT_DIR = join(REPO_ROOT, "public", "splash");
 
 function iconBox(
@@ -68,14 +73,14 @@ function main() {
     console.error(`Inkscape not found at ${INKSCAPE}`);
     process.exit(1);
   }
-  if (!existsSync(ICON_SVG)) {
-    console.error(`Missing icon: ${ICON_SVG}`);
+  if (!existsSync(ICON_MARK)) {
+    console.error(`Missing icon: ${ICON_MARK}`);
     process.exit(1);
   }
 
   mkdirSync(OUT_DIR, { recursive: true });
-  const iconHref = pathToFileURL(ICON_SVG).href;
-  const tmpDir = mkdtempSync(join(tmpdir(), "finanzzz-splash-"));
+  const iconHref = pathToFileURL(ICON_MARK).href;
+  const tmpDir = mkdtempSync(join(tmpdir(), "moon-records-splash-"));
 
   try {
     for (const filename of IOS_PORTRAIT_SPLASH_FILENAMES) {

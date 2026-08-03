@@ -50,7 +50,6 @@ import {
 } from "@/lib/limits";
 import { db } from "@/lib/db";
 import type { Expense, Source } from "@/lib/types";
-import Link from "next/link";
 import { PAYMENT_SOURCE_SECTIONS } from "@/lib/payment-source-sections";
 import { SourceTypeIcon } from "@/components/source-type-icon";
 import { ContextHint } from "./ui/context-hint";
@@ -374,22 +373,14 @@ export function ExpenseForm({
             </Select>
             {sources.length === 0 && (
               <p className="text-xs text-destructive">
-                Primero crea una cuenta en la sección{" "}
-                <Link href="/sources" className="underline">
-                  Cuentas
-                </Link>
-                .
+                No hay cuentas disponibles. Restablece los datos locales desde
+                Ajustes o recarga la aplicación.
               </p>
             )}
             {sharedBlocked && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
                 Esta cuenta compartida aún no está vinculada en este
-                dispositivo. Ve a{" "}
-                <Link href="/sources" className="underline">
-                  Cuentas
-                </Link>{" "}
-                → Cuentas compartidas, sincroniza con la otra persona y vuelve
-                aquí.
+                dispositivo.
               </p>
             )}
           </div>

@@ -6,13 +6,20 @@ import type {
   GlobalConfig,
   SharedSourceSync,
 } from "./types";
-import { PREDEFINED_TAGS, DEFAULT_GLOBAL_CONFIG } from "./constants";
-import { HOME_QUICK_ACTION_CONFIG_NONE } from "./home-quick-action-paths";
+import {
+  PREDEFINED_TAGS,
+  DEFAULT_GLOBAL_CONFIG,
+  DEFAULT_SOURCES,
+} from "./constants";
+import {
+  HOME_QUICK_ACTION_CONFIG_NONE,
+  resolveHomeQuickActionConfigId,
+} from "./home-quick-action-paths";
 import { normalizeUiZoomPercent } from "./ui-zoom";
 import { clearHomeDashboardLayoutStorage } from "./home-dashboard-layout";
 import { v4 as uuid } from "uuid";
 
-export const db = new Dexie("finanzzz") as Dexie & {
+export const db = new Dexie("moon-records-expenses") as Dexie & {
   sources: EntityTable<Source, "id">;
   expenses: EntityTable<Expense, "id">;
   tags: EntityTable<Tag, "id">;
@@ -70,6 +77,16 @@ async function insertDefaultTagsAndConfig(
   await configTable.add(DEFAULT_GLOBAL_CONFIG);
 }
 
+async function insertDefaultSources(sourcesTable: typeof db.sources) {
+  const now = Date.now();
+  const sources = DEFAULT_SOURCES.map((s) => ({
+    ...s,
+    id: uuid(),
+    createdAt: now,
+  }));
+  await sourcesTable.bulkAdd(sources);
+}
+
 /** Borra cuentas, gastos, etiquetas, ajustes y estado de sync; deja la app como recién instalada. */
 export async function resetLocalDatabase() {
   await db.transaction(
@@ -82,6 +99,7 @@ export async function resetLocalDatabase() {
       await tx.table("config").clear();
       await tx.table("sharedSync").clear();
       await insertDefaultTagsAndConfig(tx.table("tags"), tx.table("config"));
+      await insertDefaultSources(tx.table("sources"));
     }
   );
   clearHomeDashboardLayoutStorage();
@@ -91,6 +109,11 @@ export async function seedDatabase() {
   const tagCount = await db.tags.count();
   if (tagCount === 0) {
     await insertDefaultTagsAndConfig(db.tags, db.config);
+  }
+
+  const sourceCount = await db.sources.count();
+  if (sourceCount === 0) {
+    await insertDefaultSources(db.sources);
   }
 
   const configExists = await db.config.get("global");
@@ -105,6 +128,13 @@ export async function seedDatabase() {
     await db.config.update("global", {
       homeQuickActionId: HOME_QUICK_ACTION_CONFIG_NONE,
     });
+  } else {
+    const resolved = resolveHomeQuickActionConfigId(
+      configExists.homeQuickActionId
+    );
+    if (configExists.homeQuickActionId !== resolved) {
+      await db.config.update("global", { homeQuickActionId: resolved });
+    }
   }
   if (configExists?.homeQuickActionEnabled === undefined) {
     await db.config.update("global", {

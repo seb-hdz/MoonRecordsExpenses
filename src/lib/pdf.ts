@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Expense, Source, Tag } from "./types";
+import { APP_DISPLAY_NAME, APP_SHORT_NAME } from "./app-brand";
 import { CURRENCY_SYMBOL } from "./constants";
 
 /**
@@ -60,7 +61,11 @@ export function generateExpenseReport(data: ReportData): jsPDF {
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   doc.setFontSize(18);
-  doc.text(sanitizeTextForPdf(title || "Reporte de Gastos - Finanzzz"), 14, 22);
+  doc.text(
+    sanitizeTextForPdf(title || `Reporte de Gastos - ${APP_DISPLAY_NAME}`),
+    14,
+    22
+  );
 
   doc.setFontSize(11);
   doc.setTextColor(100);
@@ -139,7 +144,7 @@ export function generateExpenseReport(data: ReportData): jsPDF {
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `Finanzzz - Página ${i} de ${pageCount}`,
+      `${APP_SHORT_NAME} - Página ${i} de ${pageCount}`,
       doc.internal.pageSize.getWidth() / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: "center" }

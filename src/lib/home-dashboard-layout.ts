@@ -1,5 +1,7 @@
+import { APP_HOME_DASHBOARD_LAYOUT_STORAGE_KEY } from "@/lib/app-brand";
+
 export const HOME_DASHBOARD_LAYOUT_STORAGE_KEY =
-  "finanzzz-home-dashboard-layout" as const;
+  APP_HOME_DASHBOARD_LAYOUT_STORAGE_KEY;
 
 export type HomeDashboardWidgetId =
   | "globalGauge"

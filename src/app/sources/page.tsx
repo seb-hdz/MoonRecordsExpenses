@@ -4,17 +4,14 @@ import type { ReactNode, RefObject } from "react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { BetaBadge } from "@/components/beta-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   ALL_SOURCE_SORT_OPTIONS,
   NonSharedTypeFilterSelect,
-  SHARED_SOURCE_SORT_OPTIONS,
   SortOrderSelect,
   SOURCE_SORT_LABELS,
   type NonSharedTypeFilter,
-  type SharedSourceSort,
   type SourceSort,
 } from "@/components/sources-filter-selects";
 import {
@@ -29,19 +26,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { SourceCard } from "@/components/source-card";
 import { SourceForm } from "@/components/source-form";
-import { SharedSourceSyncModal } from "@/components/modals/shared-source-sync-modal";
 import {
   useSources,
   useExpensesInInterval,
   useGlobalConfig,
   deleteSource,
-  useSharedSyncState,
-  useSharedSourcePendingOutboundCount,
-  isSharedSourceLinked,
 } from "@/lib/db-hooks";
 import type { Expense, Source } from "@/lib/types";
 import { SOURCE_TYPE_LABELS } from "@/lib/types";
-import { Separator } from "@/components/ui/separator";
 
 function useFocusInputWhen(
   ref: RefObject<HTMLInputElement | null>,
@@ -199,9 +191,7 @@ function expenseTotalsBySourceId(expenses: Expense[]): Map<string, number> {
 function sourceMatchesQuery(source: Source, q: string): boolean {
   const n = q.trim().toLowerCase();
   if (!n) return true;
-  if (source.name.toLowerCase().includes(n)) return true;
-  if (source.sharedPublicId?.toLowerCase().includes(n)) return true;
-  return false;
+  return source.name.toLowerCase().includes(n);
 }
 
 function sortSourcesList(
@@ -238,57 +228,6 @@ function sortSourcesList(
   return out;
 }
 
-function useNowMs(tickMs: number) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), tickMs);
-    return () => clearInterval(id);
-  }, [tickMs]);
-  return now;
-}
-
-function SharedSourceCardRow({
-  source,
-  expenses,
-  config,
-  onEdit,
-  onOpenSync,
-}: {
-  source: Source;
-  expenses: Parameters<typeof SourceCard>[0]["expenses"];
-  config: Parameters<typeof SourceCard>[0]["config"];
-  onEdit: (s: Source) => void;
-  onOpenSync: (s: Source) => void;
-}) {
-  const now = useNowMs(60_000);
-  const sync = useSharedSyncState(source.id);
-  const linked = isSharedSourceLinked(sync ?? undefined);
-  const pendingOutboundCount = useSharedSourcePendingOutboundCount(
-    source.id,
-    linked
-  );
-  const staleHours = config?.sharedStaleHours ?? 168;
-  const stale =
-    linked &&
-    !!sync?.lastReceivedRemoteAt &&
-    now - sync.lastReceivedRemoteAt > staleHours * 3_600_000;
-
-  return (
-    <SourceCard
-      source={source}
-      expenses={expenses}
-      config={config}
-      onEdit={onEdit}
-      sharedMeta={{
-        linked,
-        stale,
-        pendingOutboundCount,
-        onOpenSync: () => onOpenSync(source),
-      }}
-    />
-  );
-}
-
 export default function SourcesPage() {
   const sources = useSources();
   const config = useGlobalConfig();
@@ -297,11 +236,6 @@ export default function SourcesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Source | undefined>();
   const [deleting, setDeleting] = useState<Source | undefined>();
-  const [syncSource, setSyncSource] = useState<Source | null>(null);
-
-  const [sharedSearchOpen, setSharedSearchOpen] = useState(false);
-  const [sharedSearch, setSharedSearch] = useState("");
-  const [sharedSort, setSharedSort] = useState<SharedSourceSort>("created");
 
   const [otherSearchOpen, setOtherSearchOpen] = useState(false);
   const [otherSearch, setOtherSearch] = useState("");
@@ -309,26 +243,14 @@ export default function SourcesPage() {
     useState<NonSharedTypeFilter>("all");
   const [otherSort, setOtherSort] = useState<SourceSort>("created");
 
-  const sharedSearchInputRef = useRef<HTMLInputElement>(null);
   const otherSearchInputRef = useRef<HTMLInputElement>(null);
 
   const totals = useMemo(() => expenseTotalsBySourceId(expenses), [expenses]);
 
-  const sharedSourcesRaw = useMemo(
-    () => sources.filter((s) => s.type === "shared"),
-    [sources]
-  );
   const otherSourcesRaw = useMemo(
     () => sources.filter((s) => s.type !== "shared"),
     [sources]
   );
-
-  const sharedSources = useMemo(() => {
-    const filtered = sharedSourcesRaw.filter((s) =>
-      sourceMatchesQuery(s, sharedSearch)
-    );
-    return sortSourcesList(filtered, sharedSort, totals);
-  }, [sharedSourcesRaw, sharedSearch, sharedSort, totals]);
 
   const otherSources = useMemo(() => {
     let list = otherSourcesRaw;
@@ -375,7 +297,7 @@ export default function SourcesPage() {
         </Button>
       </div>
 
-      {sources.length === 0 ? (
+      {otherSourcesRaw.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p>No hay cuentas configuradas.</p>
           <Button variant="outline" className="mt-4" onClick={handleNew}>
@@ -383,131 +305,61 @@ export default function SourcesPage() {
           </Button>
         </div>
       ) : (
-        <>
-          {sharedSourcesRaw.length > 0 && (
-            <section className="space-y-3">
-              <SourceSectionFilters
-                leading={
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold tracking-tight">
-                        Cuentas compartidas
-                      </h2>
-                      <BetaBadge />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Cuentas compartidas con el mismo id compartido en{" "}
-                      <span className="underline">cada dispositivo</span>.
-                    </p>
-                  </div>
-                }
-                middleControls={
-                  <SortOrderSelect
-                    value={sharedSort}
-                    optionKeys={SHARED_SOURCE_SORT_OPTIONS}
-                    labels={SOURCE_SORT_LABELS}
-                    onValueChange={setSharedSort}
-                  />
-                }
-                search={{
-                  open: sharedSearchOpen,
-                  query: sharedSearch,
-                  onQueryChange: setSharedSearch,
-                  onOpen: () => setSharedSearchOpen(true),
-                  onClose: () => {
-                    setSharedSearch("");
-                    setSharedSearchOpen(false);
-                  },
-                  inputRef: sharedSearchInputRef,
-                  placeholder: "Buscar por nombre o id compartido…",
-                  inputAriaLabel: "Buscar cuentas compartidas",
-                  openButtonAriaLabel: "Buscar cuentas compartidas",
-                  closeButtonAriaLabel: "Cerrar búsqueda",
-                }}
-              />
-              {sharedSources.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Ninguna cuenta compartida coincide con la búsqueda.
-                </p>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {sharedSources.map((source) => (
-                    <SharedSourceCardRow
-                      key={source.id}
-                      source={source}
-                      expenses={expenses}
-                      config={config}
-                      onEdit={handleEdit}
-                      onOpenSync={setSyncSource}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
+        <section className="space-y-3">
+          <SourceSectionFilters
+            leading={
+              <h2 className="text-lg font-semibold tracking-tight md:min-w-0">
+                Mis cuentas
+              </h2>
+            }
+            middleControls={
+              <div className="flex w-full min-w-0 flex-col gap-2 max-[409px]:items-stretch max-[409px]:[&>*]:w-full min-[410px]:flex-row min-[410px]:items-center min-[410px]:[&>*]:w-auto">
+                <NonSharedTypeFilterSelect
+                  value={otherTypeFilter}
+                  onValueChange={setOtherTypeFilter}
+                />
+                <SortOrderSelect
+                  value={otherSort}
+                  optionKeys={ALL_SOURCE_SORT_OPTIONS}
+                  labels={SOURCE_SORT_LABELS}
+                  onValueChange={setOtherSort}
+                />
+              </div>
+            }
+            search={{
+              open: otherSearchOpen,
+              query: otherSearch,
+              onQueryChange: setOtherSearch,
+              onOpen: () => setOtherSearchOpen(true),
+              onClose: () => {
+                setOtherSearch("");
+                setOtherSearchOpen(false);
+              },
+              inputRef: otherSearchInputRef,
+              placeholder: "Buscar por nombre…",
+              inputAriaLabel: "Buscar cuentas",
+              openButtonAriaLabel: "Buscar cuentas",
+              closeButtonAriaLabel: "Cerrar búsqueda",
+            }}
+          />
+          {otherSources.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Ninguna cuenta coincide con los filtros.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {otherSources.map((source) => (
+                <SourceCard
+                  key={source.id}
+                  source={source}
+                  expenses={expenses}
+                  config={config}
+                  onEdit={handleEdit}
+                />
+              ))}
+            </div>
           )}
-
-          {!!sharedSourcesRaw.length && !!otherSourcesRaw.length ? (
-            <Separator />
-          ) : null}
-
-          {otherSourcesRaw.length > 0 && (
-            <section className="space-y-3">
-              <SourceSectionFilters
-                leading={
-                  <h2 className="text-lg font-semibold tracking-tight md:min-w-0">
-                    Mis cuentas
-                  </h2>
-                }
-                middleControls={
-                  <div className="flex w-full min-w-0 flex-col gap-2 max-[409px]:items-stretch max-[409px]:[&>*]:w-full min-[410px]:flex-row min-[410px]:items-center min-[410px]:[&>*]:w-auto">
-                    <NonSharedTypeFilterSelect
-                      value={otherTypeFilter}
-                      onValueChange={setOtherTypeFilter}
-                    />
-                    <SortOrderSelect
-                      value={otherSort}
-                      optionKeys={ALL_SOURCE_SORT_OPTIONS}
-                      labels={SOURCE_SORT_LABELS}
-                      onValueChange={setOtherSort}
-                    />
-                  </div>
-                }
-                search={{
-                  open: otherSearchOpen,
-                  query: otherSearch,
-                  onQueryChange: setOtherSearch,
-                  onOpen: () => setOtherSearchOpen(true),
-                  onClose: () => {
-                    setOtherSearch("");
-                    setOtherSearchOpen(false);
-                  },
-                  inputRef: otherSearchInputRef,
-                  placeholder: "Buscar por nombre…",
-                  inputAriaLabel: "Buscar cuentas",
-                  openButtonAriaLabel: "Buscar cuentas",
-                  closeButtonAriaLabel: "Cerrar búsqueda",
-                }}
-              />
-              {otherSources.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Ninguna cuenta coincide con los filtros.
-                </p>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {otherSources.map((source) => (
-                    <SourceCard
-                      key={source.id}
-                      source={source}
-                      expenses={expenses}
-                      config={config}
-                      onEdit={handleEdit}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-        </>
+        </section>
       )}
 
       <SourceForm
@@ -516,14 +368,6 @@ export default function SourcesPage() {
         onOpenChange={setFormOpen}
         source={editing}
         onDeleteRequest={setDeleting}
-      />
-
-      <SharedSourceSyncModal
-        source={syncSource}
-        open={!!syncSource}
-        onOpenChange={(o) => {
-          if (!o) setSyncSource(null);
-        }}
       />
 
       <AlertDialog

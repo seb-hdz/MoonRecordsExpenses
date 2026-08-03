@@ -1,30 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/providers/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/logo";
+import { AppBrand } from "./app-header";
 import { NAV_ITEMS } from "./nav-config";
-import logoMark from "@/assets/logo.svg";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   return (
     <aside className="hidden h-full min-h-0 shrink-0 self-stretch border-r bg-card md:flex md:w-56 lg:w-64 flex-col">
-      <div className="flex items-center gap-2 px-5 py-3 border-b">
-        <Image
-          src={logoMark}
-          alt=""
-          width={48}
-          height={48}
-          className="shrink-0 object-contain"
-        />
-        <Logo className="mt-2" />
+      <div className="px-5 py-3 border-b">
+        <AppBrand />
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">

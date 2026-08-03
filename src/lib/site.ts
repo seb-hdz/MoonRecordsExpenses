@@ -1,6 +1,8 @@
+import { appBasePath } from "@/lib/app-base-path";
+
 /** Matches `basePath` in next.config (GitHub Pages). */
 export function getBasePath(): string {
-  return process.env.NODE_ENV === "production" ? "/finanzzz" : "";
+  return appBasePath;
 }
 
 export function getSyncSharedPath(): string {

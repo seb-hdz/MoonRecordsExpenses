@@ -12,7 +12,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { useIsStandalone } from "@/lib/use-standalone";
-import { STANDALONE_INFO_DISMISSED_KEY } from "@/components/modals/standalone-info-modal";
+import { STANDALONE_INFO_DISMISSED_KEY, STANDALONE_INFO_DISMISSED_EVENT } from "@/components/modals/standalone-info-modal";
 
 function subscribeOnline(onStoreChange: () => void) {
   window.addEventListener("online", onStoreChange);
@@ -107,12 +107,12 @@ export function OfflineInfoModal() {
     }
     queueMicrotask(syncStandaloneDismissed);
     window.addEventListener(
-      "finanzzz:standalone-info-dismissed",
+      STANDALONE_INFO_DISMISSED_EVENT,
       syncStandaloneDismissed
     );
     return () =>
       window.removeEventListener(
-        "finanzzz:standalone-info-dismissed",
+        STANDALONE_INFO_DISMISSED_EVENT,
         syncStandaloneDismissed
       );
   }, []);

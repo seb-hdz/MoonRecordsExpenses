@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [moon-records-expenses]
   workflow_dispatch:
     inputs:
       app_version_override: # 0.1.0

@@ -1,6 +1,5 @@
 export const HOME_QUICK_ACTION_PATHS = {
   new_expense: "/expenses?new",
-  sync_shared: "/sync-shared",
   report: "/reports",
 } as const;
 
@@ -15,7 +14,6 @@ export type HomeQuickActionConfigId =
 
 export const HOME_QUICK_ACTION_ORDER = [
   "new_expense",
-  "sync_shared",
   "report",
 ] as const satisfies readonly HomeQuickActionId[];
 

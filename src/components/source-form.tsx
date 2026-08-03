@@ -202,17 +202,19 @@ export function SourceForm({
                 </span>
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(SOURCE_TYPE_LABELS) as SourceType[]).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    <span className="flex min-w-0 items-center gap-2">
-                      <SourceTypeIcon
-                        type={t}
-                        className="size-4 shrink-0 text-muted-foreground"
-                      />
-                      <span className="min-w-0">{SOURCE_TYPE_LABELS[t]}</span>
-                    </span>
-                  </SelectItem>
-                ))}
+                {(Object.keys(SOURCE_TYPE_LABELS) as SourceType[])
+                  .filter((t) => t !== "shared" || type === "shared")
+                  .map((t) => (
+                    <SelectItem key={t} value={t}>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <SourceTypeIcon
+                          type={t}
+                          className="size-4 shrink-0 text-muted-foreground"
+                        />
+                        <span className="min-w-0">{SOURCE_TYPE_LABELS[t]}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
             {sharedTypeLocked ? (

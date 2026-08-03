@@ -1,5 +1,10 @@
-export const THEME_STORAGE_KEY = "finanzzz-theme" as const;
-export const THEME_AUTO_DARK_AT_KEY = "finanzzz-theme-auto-dark-at" as const;
+import {
+  APP_THEME_AUTO_DARK_AT_KEY,
+  APP_THEME_STORAGE_KEY,
+} from "@/lib/app-brand";
+
+export const THEME_STORAGE_KEY = APP_THEME_STORAGE_KEY;
+export const THEME_AUTO_DARK_AT_KEY = APP_THEME_AUTO_DARK_AT_KEY;
 
 /** Default 6:30 p.m. (24h). */
 export const DEFAULT_AUTO_DARK_AT = "18:30" as const;

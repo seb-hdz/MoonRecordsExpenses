@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Ban, FileText, Plus, RefreshCw } from "lucide-react";
+import { Ban, FileText, Plus } from "lucide-react";
 import {
   HOME_QUICK_ACTION_CONFIG_NONE,
   HOME_QUICK_ACTION_PATHS,
@@ -41,14 +41,6 @@ export const HOME_QUICK_ACTIONS: Record<HomeQuickActionId, HomeQuickActionDef> =
       href: HOME_QUICK_ACTION_PATHS.new_expense,
       Icon: Plus,
       ariaLabel: "Nuevo gasto",
-    },
-    sync_shared: {
-      id: "sync_shared",
-      label: "Sincronizar cuenta compartida",
-      description: "Ir a sincronización de cuentas compartidas",
-      href: HOME_QUICK_ACTION_PATHS.sync_shared,
-      Icon: RefreshCw,
-      ariaLabel: "Sincronizar cuenta compartida",
     },
     report: {
       id: "report",

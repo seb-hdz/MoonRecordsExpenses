@@ -1,4 +1,5 @@
-const CACHE_NAME = "finanzzz-v2";
+const CACHE_NAME = "moon-records-expenses-v1";
+const SHARE_STASH_CACHE = "moon-records-expenses-share-stash";
 
 const APP_PATHS = [
   "/",
@@ -46,7 +47,7 @@ async function handleShareIngest(request) {
       }
     }
 
-    const cache = await caches.open("finanzzz-share-stash");
+    const cache = await caches.open(SHARE_STASH_CACHE);
     const metaUrl = `${origin}${base}/__share_ingest_meta__`;
     const fileUrl = `${origin}${base}/__share_ingest_file__`;
 

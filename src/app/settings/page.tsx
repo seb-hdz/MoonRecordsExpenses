@@ -69,6 +69,7 @@ import {
   scrollMainRegionToElementId,
 } from "@/lib/main-scroll-region";
 import { useGlobalConfig, updateGlobalConfig } from "@/lib/db-hooks";
+import { APP_BACKUP_EXTENSION, APP_FILE_SLUG } from "@/lib/app-brand";
 import { exportDatabase, importDatabase } from "@/lib/export-import";
 import { resetLocalDatabase } from "@/lib/db";
 import { useTheme } from "@/providers/theme-provider";
@@ -143,9 +144,9 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `finanzzz-backup-${new Date()
+      a.download = `${APP_FILE_SLUG}-backup-${new Date()
         .toISOString()
-        .slice(0, 10)}.finanzzz`;
+        .slice(0, 10)}${APP_BACKUP_EXTENSION}`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Base de datos exportada");
@@ -210,9 +211,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Ajustes</h1>
-        <p className="text-sm text-muted-foreground">
-          Configuración de Finanzzz
-        </p>
+        <p className="text-sm text-muted-foreground">Configuración de la app</p>
       </div>
 
       <Card>
@@ -315,27 +314,6 @@ export default function SettingsPage() {
                 Se mostrará una alerta de peligro al alcanzar este %
               </p>
             </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <Label>Aviso de sincronización de cuentas compartidas (días)</Label>
-            <Input
-              type="number"
-              min="1"
-              max="365"
-              defaultValue={Math.round((config.sharedStaleHours ?? 168) / 24)}
-              onBlur={(e) => {
-                const days = parseInt(e.target.value, 10) || 7;
-                const clamped = Math.min(365, Math.max(1, days));
-                handleSaveConfig("sharedStaleHours", clamped * 24);
-              }}
-            />
-            <p className="text-xs text-muted-foreground">
-              En Cuentas compartidas, se mostrará un indicador si no recibes una
-              actualización del otro dispositivo en este número de días.
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -516,8 +494,7 @@ export default function SettingsPage() {
           </CardTitle>
           <CardDescription>
             Exporta o importa tu base de datos para mover entre dispositivos. El
-            respaldo incluye cuentas, gastos, etiquetas, ajustes y el estado de
-            sincronización actual de cuentas compartidas.
+            respaldo incluye cuentas, gastos, etiquetas y ajustes.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
@@ -549,10 +526,9 @@ export default function SettingsPage() {
           <CardDescription>
             Elimina de forma permanente:{" "}
             <span className="text-foreground">
-              cuentas, gastos, etiquetas personalizadas, ajustes de la app y el
-              estado de sincronización de cuentas compartidas
+              cuentas, gastos, etiquetas personalizadas y ajustes de la app
             </span>{" "}
-            en este dispositivo. Se restaurarán solo las etiquetas y valores por
+            en este dispositivo. Se restaurarán las cuentas y etiquetas por
             defecto. Exporta un respaldo antes si quieres conservar algo.
           </CardDescription>
         </CardHeader>
@@ -582,16 +558,21 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <div className="mt-8 flex justify-center md:hidden">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Image
-            src={logoMark}
-            alt=""
-            width={48}
-            height={48}
-            className="shrink-0 object-contain"
-          />
-          <Logo muted showAuthor />
+      <div className="mt-8 md:hidden">
+        <p className="text-xs text-muted-foreground font-medium text-center">
+          Powered by
+        </p>
+        <div className="flex justify-center ">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Image
+              src={logoMark}
+              alt=""
+              width={48}
+              height={48}
+              className="shrink-0 object-contain"
+            />
+            <Logo showAuthor />
+          </div>
         </div>
       </div>
 
@@ -662,7 +643,8 @@ export default function SettingsPage() {
           <DialogHeader>
             <DialogTitle>Importar Base de Datos</DialogTitle>
             <DialogDescription>
-              Selecciona un archivo .finanzzz y la contraseña usada al exportar.
+              Selecciona un archivo {APP_BACKUP_EXTENSION} y la contraseña usada
+              al exportar.
               Esto reemplazará todos los datos actuales.
             </DialogDescription>
           </DialogHeader>
@@ -672,7 +654,7 @@ export default function SettingsPage() {
               <Input
                 ref={fileRef}
                 type="file"
-                accept=".finanzzz"
+                accept={APP_BACKUP_EXTENSION}
                 onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
               />
             </div>

@@ -16,13 +16,6 @@ export function HomeQuickActionButton({
   const Icon = def.Icon;
   const { push } = useRouter();
 
-  const getLabel = () => {
-    if (actionId === "sync_shared") {
-      return "Sincronización";
-    }
-    return def.label;
-  };
-
   return (
     <Button
       type="button"
@@ -34,7 +27,7 @@ export function HomeQuickActionButton({
     >
       <Icon className="mt-0.5 size-4 shrink-0 self-start text-primary-foreground" />
       <span className="min-w-0 flex-1 text-left text-sm leading-snug wrap-break-word hyphens-auto line-clamp-2">
-        {getLabel()}
+        {def.label}
       </span>
     </Button>
   );

@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Bug } from "lucide-react";
+import { APP_DISPLAY_NAME } from "@/lib/app-brand";
 import { Separator } from "../ui/separator";
 
 /** Public address where you receive problem reports (edit to your inbox). */
@@ -24,7 +25,7 @@ export const REPORT_PROBLEM_EMAIL = "tu-correo@ejemplo.com";
 
 /** Prefilled subject and body for the user's mail client. */
 export const REPORT_PROBLEM_MAILTO_TEMPLATE = {
-  subject: "Finanzzz — Reporte de problema",
+  subject: `${APP_DISPLAY_NAME} — Reporte de problema`,
   body: [
     "Describe qué ocurrió",
     "Una descripción clara y breve del problema.",
@@ -64,7 +65,7 @@ export const REPORT_PROBLEM_MAILTO_TEMPLATE = {
 } as const;
 
 const REPORT_PROBLEM_GITHUB_NEW_ISSUE_URL =
-  "https://github.com/seb-hdz/finanzzz/issues/new?template=report-a-problem.md";
+  "https://github.com/seb-hdz/MoonRecordsExpenses/issues/new";
 
 // function reportProblemMailtoHref(): string {
 //   const params = new URLSearchParams({

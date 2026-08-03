@@ -1,6 +1,7 @@
 import { getBasePath } from "@/lib/site";
+import { APP_SHARE_STASH_CACHE } from "@/lib/app-brand";
 
-export const SHARE_STASH_CACHE = "finanzzz-share-stash";
+export const SHARE_STASH_CACHE = APP_SHARE_STASH_CACHE;
 
 export function shareIngestMetaRequest(): Request {
   const origin =

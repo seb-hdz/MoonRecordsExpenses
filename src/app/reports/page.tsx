@@ -19,6 +19,7 @@ import { DateIntervalRangeFields } from "@/components/date-interval-range-fields
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useSources, useTags, useExpensesByDateRange } from "@/lib/db-hooks";
+import { APP_FILE_SLUG } from "@/lib/app-brand";
 import { formatPEN } from "@/lib/limits";
 import { generateExpenseReport } from "@/lib/pdf";
 import { PAYMENT_SOURCE_SECTIONS } from "@/lib/payment-source-sections";
@@ -94,7 +95,7 @@ export default function ReportsPage() {
         endDate: endDate.getTime(),
       });
       doc.save(
-        `finanzzz-reporte-${format(startDate, "yyyy-MM-dd")}_${format(
+        `${APP_FILE_SLUG}-reporte-${format(startDate, "yyyy-MM-dd")}_${format(
           endDate,
           "yyyy-MM-dd"
         )}.pdf`

@@ -10,9 +10,9 @@
  * Deduped from Apple HIG–aligned lists (e.g. pwa-asset-generator’s fallback data).
  */
 
-/** Gradient top → bottom (#a3d926ff → #185e63ff). */
-export const IOS_SPLASH_GRADIENT_TOP = "#a3d926";
-export const IOS_SPLASH_GRADIENT_BOTTOM = "#185e63";
+/** Gradient top → bottom (brand greens). */
+export const IOS_SPLASH_GRADIENT_TOP = "#429D51";
+export const IOS_SPLASH_GRADIENT_BOTTOM = "#0F180F";
 
 const PORTRAIT_SPLASH_SPECS = [
   { imgW: 2048, imgH: 2732, dpr: 2 },

@@ -38,6 +38,7 @@ import {
   type SharedSyncReceivePanelHandle,
 } from "@/components/shared-sync-receive-panel";
 import { formatPEN } from "@/lib/limits";
+import { APP_FILE_SLUG } from "@/lib/app-brand";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useIsStandalone } from "@/lib/use-standalone";
@@ -185,7 +186,7 @@ export function SharedSourceSyncModal({
     }
     try {
       await navigator.share({
-        title: "Sincronización Finanzzz",
+        title: "Sincronización Moon Records Expenses",
         text: "Enlace para sincronizar la cuenta compartida",
         url: shareUrl,
       });
@@ -210,7 +211,7 @@ export function SharedSourceSyncModal({
     try {
       const file = await svgElementToPngFile(
         svg as SVGSVGElement,
-        "finanzzz-sync-qr.png"
+        `${APP_FILE_SLUG}-sync-qr.png`
       );
       const payload = { files: [file] };
       if (typeof navigator.share !== "function") {
