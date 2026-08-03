@@ -52,6 +52,28 @@ db.version(2)
     }
   });
 
+db.version(3)
+  .stores({
+    sources: "id, name, type, createdAt, sharedPublicId",
+    expenses: "id, sourceId, date, amount, createdAt, *tagIds",
+    tags: "id, name, isPredefined",
+    config: "id",
+    sharedSync: "sourceId",
+  })
+  .upgrade(async (tx) => {
+    await tx
+      .table("expenses")
+      .toCollection()
+      .modify((expense) => {
+        if (typeof expense.taxAmount !== "number") {
+          expense.taxAmount = 0;
+        }
+        if (typeof expense.currency !== "string" || !expense.currency.trim()) {
+          expense.currency = "PEN";
+        }
+      });
+  });
+
 export function createDefaultSharedSyncState(
   sourceId: string
 ): SharedSourceSync {

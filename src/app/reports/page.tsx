@@ -20,7 +20,10 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useSources, useTags, useExpensesByDateRange } from "@/lib/db-hooks";
 import { APP_FILE_SLUG } from "@/lib/app-brand";
-import { formatPEN } from "@/lib/limits";
+import {
+  DEFAULT_CURRENCY,
+  formatMoney,
+} from "@/lib/currency";
 import { generateExpenseReport } from "@/lib/pdf";
 import { PAYMENT_SOURCE_SECTIONS } from "@/lib/payment-source-sections";
 import { SourceTypeIcon } from "@/components/source-type-icon";
@@ -65,7 +68,14 @@ export default function ReportsPage() {
     return result;
   }, [allExpenses, selectedSources, selectedTags]);
 
-  const total = filtered.reduce((s, e) => s + e.amount, 0);
+  const totalsByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of filtered) {
+      const c = e.currency?.trim() || DEFAULT_CURRENCY;
+      map.set(c, (map.get(c) ?? 0) + e.amount);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [filtered]);
 
   function toggleSource(id: string) {
     setSelectedSources((prev) => {
@@ -266,13 +276,23 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
         <p className="text-sm text-muted-foreground">
-          {filtered.length} gasto{filtered.length !== 1 && "s"} &middot; Total:{" "}
-          <span className="font-semibold text-foreground">
-            {formatPEN(total)}
-          </span>
+          {filtered.length} gasto{filtered.length !== 1 && "s"}
         </p>
+        {totalsByCurrency.length > 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Totales:{" "}
+            {totalsByCurrency.map(([code, sum], i) => (
+              <span key={code}>
+                {i > 0 ? " · " : null}
+                <span className="font-semibold text-foreground tabular-nums">
+                  {formatMoney(sum, code)}
+                </span>
+              </span>
+            ))}
+          </p>
+        ) : null}
       </div>
 
       <ExpenseList expenses={filtered} sources={sources} tags={tags} />

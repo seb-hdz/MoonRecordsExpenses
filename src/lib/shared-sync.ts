@@ -1,7 +1,11 @@
 import { createDefaultSharedSyncState, db } from "./db";
 import type { Expense, SharedSourceSync, Source, Tag } from "./types";
 import { getSyncSharedPath } from "./site";
-import { decryptBinaryWithPassword, encryptBinaryWithPassword } from "./crypto-blob";
+import {
+  decryptBinaryWithPassword,
+  encryptBinaryWithPassword,
+} from "./crypto-blob";
+import { normalizeExpenseFields } from "./normalize-expense";
 
 const FORMAT_RAW = 0;
 const FORMAT_GZIP = 1;
@@ -48,7 +52,8 @@ function normalizeIncomingTags(raw: unknown): Tag[] {
       id: o.id,
       name: o.name,
       color: o.color,
-      isPredefined: typeof o.isPredefined === "boolean" ? o.isPredefined : false,
+      isPredefined:
+        typeof o.isPredefined === "boolean" ? o.isPredefined : false,
     });
   }
   return out;
@@ -238,7 +243,9 @@ export async function applySharedSyncFromToken(
 
   let plain: SharedSyncPlainV1;
   try {
-    plain = JSON.parse(new TextDecoder().decode(jsonBytes)) as SharedSyncPlainV1;
+    plain = JSON.parse(
+      new TextDecoder().decode(jsonBytes)
+    ) as SharedSyncPlainV1;
   } catch {
     return { ok: false, error: "Contenido del enlace corrupto." };
   }
@@ -268,7 +275,8 @@ export async function applySharedSyncFromToken(
 
   const target = sources[0]!;
   const syncRow =
-    (await db.sharedSync.get(target.id)) ?? createDefaultSharedSyncState(target.id);
+    (await db.sharedSync.get(target.id)) ??
+    createDefaultSharedSyncState(target.id);
 
   const incomingTags = normalizeIncomingTags(plain.tags);
 
@@ -280,7 +288,10 @@ export async function applySharedSyncFromToken(
 
     for (const inc of plain.expenses) {
       const existing = await db.expenses.get(inc.id);
-      const row: Expense = { ...inc, sourceId: target.id };
+      const row: Expense = normalizeExpenseFields({
+        ...inc,
+        sourceId: target.id,
+      });
       if (!existing) {
         await db.expenses.add(row);
         merged += 1;
@@ -326,14 +337,14 @@ export async function recordSuccessfulSharedEmission(
   sourceId: string,
   includedExpenseIds: string[]
 ): Promise<void> {
-  const row = (await db.sharedSync.get(sourceId)) ?? createDefaultSharedSyncState(sourceId);
+  const row =
+    (await db.sharedSync.get(sourceId)) ??
+    createDefaultSharedSyncState(sourceId);
   const now = String(Date.now());
   const emitted = new Set([...row.emittedExpenseIds, ...includedExpenseIds]);
   const cap = 3000;
   const emittedExpenseIds =
-    emitted.size > cap
-      ? [...emitted].slice(-cap)
-      : [...emitted];
+    emitted.size > cap ? [...emitted].slice(-cap) : [...emitted];
 
   await db.sharedSync.put({
     ...row,

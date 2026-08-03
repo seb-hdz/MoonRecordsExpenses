@@ -24,6 +24,8 @@ export function buildExpenseDraft(params: {
     : randCatchPhrase();
   return {
     amount: params.amount,
+    taxAmount: 0,
+    currency: "PEN",
     description: description.slice(0, 200),
     sourceId: params.sourceId,
     tagIds: params.tagIds,

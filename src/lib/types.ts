@@ -45,6 +45,10 @@ export const SHARED_PUBLIC_ID_PATTERN = /^[a-z0-9._-]{1,30}$/;
 export interface Expense {
   id: string;
   amount: number;
+  /** Impuesto desglosado; 0 si el monto ya incluye impuesto o no hay desglose. */
+  taxAmount: number;
+  /** Código/abreviatura (PEN, USD, EUR, … o custom). */
+  currency: string;
   description: string;
   sourceId: string;
   tagIds: string[];

@@ -53,6 +53,14 @@ import type { Expense, Source } from "@/lib/types";
 import { PAYMENT_SOURCE_SECTIONS } from "@/lib/payment-source-sections";
 import { SourceTypeIcon } from "@/components/source-type-icon";
 import { ContextHint } from "./ui/context-hint";
+import {
+  CURRENCY_OTHER_VALUE,
+  CURRENCY_PRESETS,
+  currencyDisplay,
+  DEFAULT_CURRENCY,
+  isCurrencyPresetCode,
+  normalizeCurrencyCode,
+} from "@/lib/currency";
 
 const toastAccountIconClassName = "size-3 shrink-0 pt-1";
 
@@ -94,8 +102,28 @@ export function ExpenseForm({
   const tags = useTags();
   const config = useGlobalConfig();
 
-  const [amount, setAmount] = useState(
-    expense ? expense.amount.toFixed(2) : ""
+  const [amount, setAmount] = useState(() => {
+    if (!expense) return "";
+    const tax = expense.taxAmount ?? 0;
+    const base = tax > 0 ? expense.amount - tax : expense.amount;
+    return base.toFixed(2);
+  });
+  const [taxAmount, setTaxAmount] = useState(() =>
+    expense && (expense.taxAmount ?? 0) > 0
+      ? expense.taxAmount.toFixed(2)
+      : ""
+  );
+  const [includesTax, setIncludesTax] = useState(
+    () => !expense || (expense.taxAmount ?? 0) <= 0
+  );
+  const initialCurrency = expense?.currency?.trim() || DEFAULT_CURRENCY;
+  const [currencySelect, setCurrencySelect] = useState(() =>
+    isCurrencyPresetCode(initialCurrency)
+      ? initialCurrency
+      : CURRENCY_OTHER_VALUE
+  );
+  const [customCurrency, setCustomCurrency] = useState(() =>
+    isCurrencyPresetCode(initialCurrency) ? "" : initialCurrency
   );
   const [description, setDescription] = useState(expense?.description ?? "");
   const [sourceId, setSourceId] = useState(expense?.sourceId ?? "");
@@ -107,6 +135,16 @@ export function ExpenseForm({
   );
 
   const isEditing = !!expense;
+
+  const resolvedCurrencyCode =
+    currencySelect === CURRENCY_OTHER_VALUE
+      ? normalizeCurrencyCode(customCurrency)
+      : currencySelect;
+  const amountLabelSymbol = currencyDisplay(
+    currencySelect === CURRENCY_OTHER_VALUE
+      ? customCurrency.trim() || DEFAULT_CURRENCY
+      : currencySelect
+  );
 
   const defaultNewSourceId = useMemo(
     () => (sources.length === 0 ? "" : defaultPaymentSourceId(sources)),
@@ -136,8 +174,8 @@ export function ExpenseForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const parsedAmount = parseFloat(amount);
-    if (!parsedAmount || parsedAmount <= 0 || !resolvedSourceId) return;
+    const parsedBase = parseFloat(amount);
+    if (!parsedBase || parsedBase <= 0 || !resolvedSourceId) return;
     if (sharedBlocked) {
       toast.error(
         "Vincula la cuenta compartida (envía y recibe una actualización) antes de registrar gastos.",
@@ -148,8 +186,27 @@ export function ExpenseForm({
       return;
     }
 
+    if (currencySelect === CURRENCY_OTHER_VALUE && !customCurrency.trim()) {
+      toast.error("Introduce la abreviatura de la moneda.");
+      return;
+    }
+
+    let parsedTax = 0;
+    let parsedAmount = parsedBase;
+    if (!includesTax) {
+      parsedTax = parseFloat(taxAmount);
+      if (Number.isNaN(parsedTax) || parsedTax < 0) {
+        toast.error("El impuesto debe ser un número válido (≥ 0).");
+        return;
+      }
+      parsedAmount = Math.round((parsedBase + parsedTax) * 100) / 100;
+      if (parsedAmount <= 0) return;
+    }
+
     const data = {
       amount: parsedAmount,
+      taxAmount: includesTax ? 0 : parsedTax,
+      currency: resolvedCurrencyCode,
       description: description.trim(),
       sourceId: resolvedSourceId,
       tagIds: selectedTags,
@@ -172,6 +229,10 @@ export function ExpenseForm({
     onOpenChange(false);
     if (!isEditing) {
       setAmount("");
+      setTaxAmount("");
+      setIncludesTax(true);
+      setCurrencySelect(DEFAULT_CURRENCY);
+      setCustomCurrency("");
       setDescription("");
       setSelectedTags([]);
     }
@@ -261,7 +322,47 @@ export function ExpenseForm({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Monto (S/)</Label>
+            <Label>Moneda</Label>
+            <Select
+              value={currencySelect}
+              onValueChange={(v) => v && setCurrencySelect(v)}
+            >
+              <SelectTrigger className="w-full min-w-0">
+                <span data-slot="select-value" className="min-w-0 flex-1 text-left">
+                  {currencySelect === CURRENCY_OTHER_VALUE
+                    ? "Otro"
+                    : CURRENCY_PRESETS.find((p) => p.code === currencySelect)
+                        ?.label ?? "Moneda"}
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCY_PRESETS.map((p) => (
+                  <SelectItem key={p.code} value={p.code}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+                <SelectItem value={CURRENCY_OTHER_VALUE}>Otro</SelectItem>
+              </SelectContent>
+            </Select>
+            {currencySelect === CURRENCY_OTHER_VALUE ? (
+              <Input
+                id="custom-currency"
+                placeholder="Abreviatura (ej. JPY, CAD)"
+                value={customCurrency}
+                onChange={(e) => setCustomCurrency(e.target.value)}
+                maxLength={12}
+                required
+                autoComplete="off"
+              />
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="amount">
+              {includesTax
+                ? `Monto (${amountLabelSymbol})`
+                : `Subtotal (sin impuesto) (${amountLabelSymbol})`}
+            </Label>
             <Input
               id="amount"
               type="number"
@@ -277,7 +378,42 @@ export function ExpenseForm({
               required
               autoFocus
             />
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={includesTax}
+                onChange={(e) => {
+                  const next = e.target.checked;
+                  setIncludesTax(next);
+                  if (next) setTaxAmount("");
+                }}
+              />
+              Incluye impuestos
+            </label>
           </div>
+
+          {!includesTax ? (
+            <div className="space-y-2">
+              <Label htmlFor="tax-amount">
+                Impuesto ({amountLabelSymbol})
+              </Label>
+              <Input
+                id="tax-amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={taxAmount}
+                onChange={(e) => setTaxAmount(e.target.value)}
+                onBlur={() => {
+                  const n = parseFloat(taxAmount);
+                  if (!Number.isNaN(n) && n >= 0) setTaxAmount(n.toFixed(2));
+                }}
+                required
+              />
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>

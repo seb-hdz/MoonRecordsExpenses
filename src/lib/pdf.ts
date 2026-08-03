@@ -4,7 +4,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Expense, Source, Tag } from "./types";
 import { APP_DISPLAY_NAME, APP_SHORT_NAME } from "./app-brand";
-import { CURRENCY_SYMBOL } from "./constants";
+import {
+  currencyDisplay,
+  DEFAULT_CURRENCY,
+  formatMoney,
+} from "./currency";
 
 /**
  * Helvetica en jsPDF solo cubre bien WinAnsi (~Latin-1). Emoji, pictos y muchos
@@ -48,6 +52,19 @@ interface ReportData {
   title?: string;
 }
 
+function expenseCurrency(e: Expense): string {
+  return e.currency?.trim() || DEFAULT_CURRENCY;
+}
+
+function totalsByCurrency(expenses: Expense[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const e of expenses) {
+    const c = expenseCurrency(e);
+    map.set(c, (map.get(c) ?? 0) + e.amount);
+  }
+  return map;
+}
+
 export function generateExpenseReport(data: ReportData): jsPDF {
   const doc = new jsPDF();
   const { expenses, sources, tags, startDate, endDate, title } = data;
@@ -58,7 +75,9 @@ export function generateExpenseReport(data: ReportData): jsPDF {
   const rangeLabel = `${format(startDate, "dd MMM yyyy", {
     locale: es,
   })} - ${format(endDate, "dd MMM yyyy", { locale: es })}`;
-  const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const currencyTotals = totalsByCurrency(expenses);
+  const hasTaxBreakdown = expenses.some((e) => (e.taxAmount ?? 0) > 0);
 
   doc.setFontSize(18);
   doc.text(
@@ -69,13 +88,79 @@ export function generateExpenseReport(data: ReportData): jsPDF {
 
   doc.setFontSize(11);
   doc.setTextColor(100);
-  doc.text(`Período: ${rangeLabel}`, 14, 32);
-  doc.text(`Total: ${CURRENCY_SYMBOL} ${total.toFixed(2)}`, 14, 39);
-  doc.text(`Gastos registrados: ${expenses.length}`, 14, 46);
+  let yHead = 32;
+  doc.text(`Período: ${rangeLabel}`, 14, yHead);
+  yHead += 7;
+  doc.text(`Gastos registrados: ${expenses.length}`, 14, yHead);
+  yHead += 7;
 
-  const tableData = expenses
-    .sort((a, b) => a.date - b.date)
-    .map((e) => [
+  if (currencyTotals.size === 0) {
+    doc.text("Total: —", 14, yHead);
+    yHead += 7;
+  } else {
+    doc.text("Totales por moneda:", 14, yHead);
+    yHead += 6;
+    for (const [code, sum] of currencyTotals) {
+      doc.text(
+        sanitizeTextForPdf(`  ${formatMoney(sum, code)}`),
+        14,
+        yHead
+      );
+      yHead += 5;
+    }
+  }
+
+  const sorted = [...expenses].sort((a, b) => a.date - b.date);
+
+  const tableStartY = Math.max(yHead + 4, 54);
+
+  if (hasTaxBreakdown) {
+    const tableData = sorted.map((e) => {
+      const tax = e.taxAmount ?? 0;
+      const subtotal = tax > 0 ? e.amount - tax : e.amount;
+      const cur = expenseCurrency(e);
+      return [
+        format(e.date, "dd/MM/yyyy"),
+        sanitizeTextForPdf(e.description),
+        sanitizeTextForPdf(sourceMap.get(e.sourceId)?.name ?? "—"),
+        sanitizeTextForPdf(
+          e.tagIds
+            .map((id) => tagMap.get(id)?.name ?? "")
+            .filter(Boolean)
+            .join(", ") || "—"
+        ),
+        sanitizeTextForPdf(currencyDisplay(cur)),
+        subtotal.toFixed(2),
+        tax > 0 ? tax.toFixed(2) : "—",
+        e.amount.toFixed(2),
+      ];
+    });
+
+    autoTable(doc, {
+      startY: tableStartY,
+      head: [
+        [
+          "Fecha",
+          "Descripción",
+          "Cuenta",
+          "Tags",
+          "Moneda",
+          "Subtotal",
+          "Impuesto",
+          "Total",
+        ],
+      ],
+      body: tableData,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [30, 30, 30] },
+      columnStyles: {
+        5: { halign: "right" },
+        6: { halign: "right" },
+        7: { halign: "right" },
+      },
+    });
+  } else {
+    const tableData = sorted.map((e) => [
       format(e.date, "dd/MM/yyyy"),
       sanitizeTextForPdf(e.description),
       sanitizeTextForPdf(sourceMap.get(e.sourceId)?.name ?? "—"),
@@ -85,24 +170,28 @@ export function generateExpenseReport(data: ReportData): jsPDF {
           .filter(Boolean)
           .join(", ") || "—"
       ),
+      sanitizeTextForPdf(currencyDisplay(expenseCurrency(e))),
       e.amount.toFixed(2),
     ]);
 
-  autoTable(doc, {
-    startY: 54,
-    head: [["Fecha", "Descripción", "Cuenta", "Tags", "Monto (S/.)"]],
-    body: tableData,
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: [30, 30, 30] },
-    columnStyles: {
-      4: { halign: "right" },
-    },
-  });
+    autoTable(doc, {
+      startY: tableStartY,
+      head: [["Fecha", "Descripción", "Cuenta", "Tags", "Moneda", "Monto"]],
+      body: tableData,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [30, 30, 30] },
+      columnStyles: {
+        5: { halign: "right" },
+      },
+    });
+  }
 
-  const bySource = new Map<string, number>();
-  expenses.forEach((e) => {
-    bySource.set(e.sourceId, (bySource.get(e.sourceId) ?? 0) + e.amount);
-  });
+  // Resumen por cuenta + moneda
+  const bySourceCurrency = new Map<string, number>();
+  for (const e of expenses) {
+    const key = `${e.sourceId}\0${expenseCurrency(e)}`;
+    bySourceCurrency.set(key, (bySourceCurrency.get(key) ?? 0) + e.amount);
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const finalY = (doc as any).lastAutoTable?.finalY ?? 80;
@@ -118,23 +207,30 @@ export function generateExpenseReport(data: ReportData): jsPDF {
   doc.text("Resumen por cuenta", 14, y);
   y += 8;
 
-  const summaryData = Array.from(bySource.entries()).map(
-    ([sourceId, amount]) => [
-      sanitizeTextForPdf(sourceMap.get(sourceId)?.name ?? "—"),
-      amount.toFixed(2),
-      total > 0 ? `${((amount / total) * 100).toFixed(1)}%` : "0%",
-    ]
+  const summaryData = Array.from(bySourceCurrency.entries()).map(
+    ([key, amount]) => {
+      const [sourceId, cur] = key.split("\0");
+      const currencyTotal = currencyTotals.get(cur!) ?? 0;
+      return [
+        sanitizeTextForPdf(sourceMap.get(sourceId!)?.name ?? "—"),
+        sanitizeTextForPdf(currencyDisplay(cur!)),
+        amount.toFixed(2),
+        currencyTotal > 0
+          ? `${((amount / currencyTotal) * 100).toFixed(1)}%`
+          : "0%",
+      ];
+    }
   );
 
   autoTable(doc, {
     startY: y,
-    head: [["Cuenta", "Monto (S/.)", "% del Total"]],
+    head: [["Cuenta", "Moneda", "Monto", "% de esa moneda"]],
     body: summaryData,
     styles: { fontSize: 9 },
     headStyles: { fillColor: [30, 30, 30] },
     columnStyles: {
-      1: { halign: "right" },
       2: { halign: "right" },
+      3: { halign: "right" },
     },
   });
 

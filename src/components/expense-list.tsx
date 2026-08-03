@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Expense, Source, Tag } from "@/lib/types";
-import { formatPEN } from "@/lib/limits";
+import { DEFAULT_CURRENCY, formatMoney } from "@/lib/currency";
 
 function ClampedText({ text }: { text: string }) {
   const ref = useRef<HTMLParagraphElement>(null);
@@ -129,7 +129,10 @@ export function ExpenseList({
             </div>
             <div className="flex shrink-0 items-center gap-1 pl-1">
               <span className="font-semibold text-sm whitespace-nowrap tabular-nums">
-                {formatPEN(expense.amount)}
+                {formatMoney(
+                  expense.amount,
+                  expense.currency ?? DEFAULT_CURRENCY
+                )}
               </span>
               {onEdit ? (
                 <Button
