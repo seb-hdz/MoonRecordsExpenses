@@ -2,7 +2,7 @@
 export const APP_DISPLAY_NAME = "Moon Records Expenses" as const;
 
 /** Shorter label for home screen / cramped UI (PWA `short_name`). */
-export const APP_SHORT_NAME = "Moon Records" as const;
+export const APP_SHORT_NAME = "MR Expenses" as const;
 
 /**
  * Slug for filenames, Dexie, localStorage, Cache Storage, and custom events.
